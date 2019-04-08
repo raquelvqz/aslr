@@ -3,28 +3,33 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <sys/mman.h>
-#include <sys/shm.h>
+#include <sys/auxv.h>
+#include <unistd.h>
 #define MAX_PATH 255
 
-int verifySharedMemory(FILE *fileCSV)
+int verifyCode(FILE *fileCSV)
 {
-  void *r;
-  int mem_id;
-  if ((mem_id = shmget(IPC_PRIVATE, 4096, IPC_CREAT | 0777))== -1)
-  {
-    fprintf(stdout,"error,");   
-    return 1;
-  }
-  if ((r = shmat(mem_id,NULL,0))==(void*) -1)
-  {
-    fprintf(stdout,"error,");  
-    return 1;
-  }
-  fprintf(stdout,"%8p,",r);
-  fprintf(fileCSV,"%8p,",r);
-  if ((shmctl( mem_id, IPC_RMID, r)) == -1) 
-      return 1;
+	fprintf(stdout,"%p\n",verifyCode);
+	fprintf(fileCSV,"%p\n",verifyCode);
+	return 0;
+}
+
+int verifyBrk(FILE *fileCSV)
+{
+  void *b = sbrk(0);
+  int *p = (int *)b;
+	fprintf(stdout,"%p,",p);
+	fprintf(fileCSV,"%p,",p);
+  brk(b);
   return 0;
+}
+
+int verifyVDSO(FILE *fileCSV)
+{
+  unsigned long vdso = getauxval(AT_SYSINFO_EHDR);
+	fprintf(stdout,"%p,",(unsigned long*) vdso);
+	fprintf(fileCSV,"%p,",(unsigned long*) vdso);
+	return 0;
 }
 
 int verifyMmap(FILE *fileCSV)
@@ -36,14 +41,14 @@ int verifyMmap(FILE *fileCSV)
     fprintf(stdout,"error,");   
     return 1;
   }
-  fprintf(stdout,"%8p,",p);
-  fprintf(fileCSV,"%8p,",p);
+  fprintf(stdout,"%p,",p);
+  fprintf(fileCSV,"%p,",p);
   if (munmap(p, sizeof(int)) == -1)
     return 1;
 	return 0;
 }
 
-int verifyHeapMalloc(FILE *fileCSV)
+int verifyHeap(FILE *fileCSV)
 {
 	char *mallocVar;
 	mallocVar=(char *) malloc(100);
@@ -52,8 +57,8 @@ int verifyHeapMalloc(FILE *fileCSV)
 		fprintf(stdout,"error,");
 		return 1;
 	} 
-  fprintf(stdout,"%8p,",mallocVar);
-  fprintf(fileCSV,"%8p,",mallocVar);
+  fprintf(stdout,"%p,",mallocVar);
+  fprintf(fileCSV,"%p,",mallocVar);
   free(mallocVar);
 	return 0;
 }
@@ -61,8 +66,8 @@ int verifyHeapMalloc(FILE *fileCSV)
 int verifyStack(FILE *fileCSV)
 {
 	int stack=1;
-	fprintf(stdout,"%8p,",&stack);
-	fprintf(fileCSV,"%8p,",&stack);
+	fprintf(stdout,"%p,",&stack);
+	fprintf(fileCSV,"%p,",&stack);
 	return 0;
 }
 
@@ -86,16 +91,16 @@ int main(int argc, char *argv[])
     printf("Cannot open an input file. Exiting.\n");
     return 1;
   }
-  printf("+-------+--------+--------+--------+\n");
-  printf(" Stack | Heap | Mmap | Shared Mem\n");
-  printf("+-------+--------+--------+--------+\n");
+  printf("+-------+--------+--------+--------+--------+--------+\n");
+  printf(" VDSO | Stack | Mmap | Heap | Brk | Code \n");
+  printf("+-------+--------+--------+--------+--------+--------+\n");
 
-	verifyStack(fileCSV);
-	verifyHeapMalloc(fileCSV);
+	verifyVDSO(fileCSV);
+  verifyStack(fileCSV);
 	verifyMmap(fileCSV);
-	verifySharedMemory(fileCSV);
-	fprintf(stdout,"\n");
-	fprintf(fileCSV,"\n");
+	verifyHeap(fileCSV);
+  verifyBrk(fileCSV);
+  verifyCode(fileCSV);
   fclose(fileCSV);	
   return 0; 
 }
