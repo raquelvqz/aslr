@@ -13,43 +13,43 @@
 int verifyCode(FILE *fileCSV)
 {
   extern void _start();
-	fprintf(stdout,"%p\n",&_start);
-	fprintf(fileCSV,"%p\n",&_start);
-	return 0;
+  fprintf(stdout,"%p\n",&_start);
+  fprintf(fileCSV,"%p\n",&_start);
+  return 0;
 }
 
 //se comprueba una dirección del segmento de datos (data segment)
 int verifyData(FILE *fileCSV)
 {
   static int staticVar = 3;
-	fprintf(stdout,"%p,",&staticVar);
-	fprintf(fileCSV,"%p,",&staticVar);
-	return 0;
+  fprintf(stdout,"%p,",&staticVar);
+  fprintf(fileCSV,"%p,",&staticVar);
+  return 0;
 }
 
 //se comprueba una dirección del BSS, donde están las variables no inicializadas
 int verifyBSS(FILE *fileCSV)
 {
   static char *uninitVar;
-	fprintf(stdout,"%p,",&uninitVar);
-	fprintf(fileCSV,"%p,",&uninitVar);
-	return 0;
+  fprintf(stdout,"%p,",&uninitVar);
+  fprintf(fileCSV,"%p,",&uninitVar);
+  return 0;
 }
 
 //se comprueba el comienzo del heap
 int verifyHeap(FILE *fileCSV)
 {
-	char *mallocVar;
-	mallocVar=(char *) malloc(100);
-	if(mallocVar==NULL)
+  char *mallocVar;
+  mallocVar=(char *) malloc(100);
+  if(mallocVar==NULL)
   {
-		fprintf(stdout,"error,");
-		return 1;
-	} 
+    fprintf(stdout,"error,");
+    return 1;
+  } 
   fprintf(stdout,"%p,",mallocVar);
   fprintf(fileCSV,"%p,",mallocVar);
   free(mallocVar);
-	return 0;
+  return 0;
 }
 
 //se comprueba el comienzo del brk (final del heap)
@@ -57,8 +57,8 @@ int verifyBrk(FILE *fileCSV)
 {
   void *b = sbrk(0);
   int *p = (int *)b;
-	fprintf(stdout,"%p,",p);
-	fprintf(fileCSV,"%p,",p);
+  fprintf(stdout,"%p,",p);
+  fprintf(fileCSV,"%p,",p);
   brk(b);
   return 0;
 }
@@ -77,25 +77,25 @@ int verifyMmap(FILE *fileCSV)
   fprintf(fileCSV,"%p,",p);
   if (munmap(p, sizeof(int)) == -1)
     return 1;
-	return 0;
+  return 0;
 }
 
 //se comprueba la dirección de la pila
 int verifyStack(FILE *fileCSV)
 {
-	int stack=1;
-	fprintf(stdout,"%p,",&stack);
-	fprintf(fileCSV,"%p,",&stack);
-	return 0;
+  int stack=1;
+  fprintf(stdout,"%p,",&stack);
+  fprintf(fileCSV,"%p,",&stack);
+  return 0;
 }
 
 //se comprueba la dirección de un Virtual Dynamic Shared Object
 int verifyVDSO(FILE *fileCSV)
 {
   unsigned long vdso = getauxval(AT_SYSINFO_EHDR);
-	fprintf(stdout,"%p,",(unsigned long*) vdso);
-	fprintf(fileCSV,"%p,",(unsigned long*) vdso);
-	return 0;
+  fprintf(stdout,"%p,",(unsigned long*) vdso);
+  fprintf(fileCSV,"%p,",(unsigned long*) vdso);
+  return 0;
 }
 
 int main(int argc, char *argv[])
@@ -125,14 +125,14 @@ int main(int argc, char *argv[])
   printf("+-------------+--------------+--------------+--------------+"
     "--------------+--------------+--------------+-------------+\n");
 
-	verifyVDSO(fileCSV);
+  verifyVDSO(fileCSV);
   verifyStack(fileCSV);
-	verifyMmap(fileCSV);
+  verifyMmap(fileCSV);
   verifyBrk(fileCSV);
-	verifyHeap(fileCSV);
+  verifyHeap(fileCSV);
   verifyBSS(fileCSV);
   verifyData(fileCSV); 
   verifyCode(fileCSV);
-  fclose(fileCSV);	
+  fclose(fileCSV);
   return 0; 
 }
