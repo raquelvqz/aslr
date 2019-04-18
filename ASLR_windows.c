@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include <unistd.h>
 #define MAX_PATH 255
+#define PEB_OFFSET 0x60
 
 //se comprueba el comienzo del código (text segment)
 int verifyCode(FILE *fileCSV)
@@ -28,6 +29,18 @@ int verifyBSS(FILE *fileCSV)
   static char *uninitVar;
   fprintf(stdout,"0x%x,",&uninitVar);
   fprintf(fileCSV,"0x%x,",&uninitVar);
+  return 0;
+}
+
+//se comprueba la dirección donde comienza el Process Environment Block
+int verifyPEB(FILE *fileCSV)
+{
+  void* p;
+  __asm__("mov %%fs, %0":"=r"(p)); //se obtiene la dirección del registro FS
+  //la suma de 0x60 (para x86_64) permite obtener la dirección base del PEB
+  void* pebBase = (void*) &p + PEB_OFFSET; 
+  fprintf(stdout,"0x%x,",(void*)(size_t)pebBase);
+  fprintf(fileCSV,"0x%x,",(void*)(size_t)pebBase);
   return 0;
 }
 
@@ -122,7 +135,7 @@ int main(int argc, char *argv[])
   printf("+-------------+--------------+--------------+--------------+" 
     "--------------+--------------+--------------+-------------+\n");
   printf("    Stack     |    Heap 1   |    Heap 2   |    Heap 3   |"
-    "     BSS      |     Data     |     Code     \n");
+    "     PEB     |     BSS      |     Data     |     Code     \n");
   printf("+-------------+--------------+--------------+--------------+"
     "--------------+--------------+--------------+-------------+\n");
 
@@ -130,6 +143,7 @@ int main(int argc, char *argv[])
   verifyHeapCreate(fileCSV);
   verifyHeapAlloc(fileCSV);
   verifyMalloc(fileCSV);
+  verifyPEB(fileCSV);
   verifyBSS(fileCSV);
   verifyData(fileCSV); 
   verifyCode(fileCSV);
