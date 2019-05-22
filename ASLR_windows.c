@@ -3,14 +3,14 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <unistd.h>
-#define MAX_PATH 255
+#include <windows.h>
 #define PEB_OFFSET 0x60
 
 //se comprueba el comienzo del código (text segment)
 int verifyCode(FILE *fileCSV)
 {
-  fprintf(stdout,"0x%x\n",&verifyCode);
-  fprintf(fileCSV,"0x%x\n",&verifyCode);
+  fprintf(stdout,"0x%llX\n",&verifyCode);
+  fprintf(fileCSV,"0x%llX\n",&verifyCode);
   return 0;
 }
 
@@ -18,8 +18,8 @@ int verifyCode(FILE *fileCSV)
 int verifyData(FILE *fileCSV)
 {
   static int staticVar = 3;
-  fprintf(stdout,"0x%x,",&staticVar);
-  fprintf(fileCSV,"0x%x,",&staticVar);
+  fprintf(stdout,"0x%llX,",&staticVar);
+  fprintf(fileCSV,"0x%llX,",&staticVar);
   return 0;
 }
 
@@ -27,8 +27,8 @@ int verifyData(FILE *fileCSV)
 int verifyBSS(FILE *fileCSV)
 {
   static char *uninitVar;
-  fprintf(stdout,"0x%x,",&uninitVar);
-  fprintf(fileCSV,"0x%x,",&uninitVar);
+  fprintf(stdout,"0x%llX,",&uninitVar);
+  fprintf(fileCSV,"0x%llX,",&uninitVar);
   return 0;
 }
 
@@ -39,8 +39,8 @@ int verifyPEB(FILE *fileCSV)
   __asm__("mov %%fs, %0":"=r"(p)); //se obtiene la dirección del registro FS
   //la suma de 0x60 (para x86_64) permite obtener la dirección base del PEB
   void* pebBase = (void*) &p + PEB_OFFSET; 
-  fprintf(stdout,"0x%x,",(void*)(size_t)pebBase);
-  fprintf(fileCSV,"0x%x,",(void*)(size_t)pebBase);
+  fprintf(stdout,"0x%llX,",(void*)(size_t)pebBase);
+  fprintf(fileCSV,"0x%llX,",(void*)(size_t)pebBase);
   return 0;
 }
 
@@ -49,7 +49,7 @@ int verifyHeapCreate(FILE *fileCSV)
 {
   void *hHeap;
   void *p;
-  hHeap=(void *)(size_t)HeapCreate(NULL,1024,2048);
+  hHeap=(void *)(size_t)HeapCreate(0x00040000,1024,2048);
   if(hHeap==NULL){
     fprintf(stdout,"error,");
     return 1;
@@ -59,8 +59,8 @@ int verifyHeapCreate(FILE *fileCSV)
       fprintf(stdout,"error,");
       return 1;
     } else {
-      fprintf(stdout,"0x%x,",p);
-      fprintf(fileCSV,"0x%x,",p);
+      fprintf(stdout,"0x%llX,",p);
+      fprintf(fileCSV,"0x%llX,",p);
       HeapFree(hHeap,0,p);
       return 0;
     }
@@ -78,8 +78,8 @@ int verifyHeapAlloc(FILE *fileCSV)
     fprintf(stdout,"error,");
     return 1;
   } else {
-    fprintf(stdout,"0x%x,",p);
-    fprintf(fileCSV,"0x%x,",p);
+    fprintf(stdout,"0x%llX,",p);
+    fprintf(fileCSV,"0x%llX,",p);
     HeapFree(GetProcessHeap(),0,p);
     return 0;
   }
@@ -96,8 +96,8 @@ int verifyMalloc(FILE *fileCSV)
     fprintf(stdout,"error,");
     return 1;
   } 
-  fprintf(stdout,"0x%x,",mallocVar);
-  fprintf(fileCSV,"0x%x,",mallocVar);
+  fprintf(stdout,"0x%llX,",mallocVar);
+  fprintf(fileCSV,"0x%llX,",mallocVar);
   free(mallocVar);
   return 0;
 }
@@ -106,8 +106,8 @@ int verifyMalloc(FILE *fileCSV)
 int verifyStack(FILE *fileCSV)
 {
   int stack=1;
-  fprintf(stdout,"0x%x,",&stack);
-  fprintf(fileCSV,"0x%x,",&stack);
+  fprintf(stdout,"0x%llX,",&stack);
+  fprintf(fileCSV,"0x%llX,",&stack);
   return 0;
 }
 
@@ -132,13 +132,13 @@ int main(int argc, char *argv[])
     printf("Cannot open an input file. Exiting.\n");
     return 1;
   }
-  printf("+-------------+--------------+--------------+--------------+" 
-    "--------------+--------------+--------------+-------------+\n");
-  printf("    Stack     |    Heap 1   |    Heap 2   |    Heap 3   |"
-    "     PEB     |     BSS      |     Data     |     Code     \n");
-  printf("+-------------+--------------+--------------+--------------+"
-    "--------------+--------------+--------------+-------------+\n");
-
+  printf("+-----------+-------------+-------------+-------------+" 
+    "-------------+-------------+-------------+-----------+\n");
+  printf("   Stack    |    Heap 1   |    Heap 2   |    Heap 3   |"
+    "     PEB     |     BSS     |     Data    |    Code    \n");
+  printf("+-----------+-------------+-------------+-------------+" 
+    "-------------+-------------+-------------+-----------+\n");
+  
   verifyStack(fileCSV);
   verifyHeapCreate(fileCSV);
   verifyHeapAlloc(fileCSV);

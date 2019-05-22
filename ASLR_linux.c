@@ -1,5 +1,3 @@
-// para que los segmentos de texto, datos y BSS sean también aleatorios,
-// hay que compilar con la opción -fPIE -pie: gcc -fPIE -pie -o output ASLR_linux.out
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -59,7 +57,6 @@ int verifyBrk(FILE *fileCSV)
   int *p = (int *)b;
   fprintf(stdout,"%p,",p);
   fprintf(fileCSV,"%p,",p);
-  brk(b);
   return 0;
 }
 
