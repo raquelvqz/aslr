@@ -4,7 +4,6 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <windows.h>
-#define PEB_OFFSET 0x60
 
 //se comprueba el comienzo del código (text segment)
 int verifyCode(FILE *fileCSV)
@@ -35,12 +34,12 @@ int verifyBSS(FILE *fileCSV)
 //se comprueba la dirección donde comienza el Process Environment Block
 int verifyPEB(FILE *fileCSV)
 {
-  void* p;
-  __asm__("mov %%fs, %0":"=r"(p)); //se obtiene la dirección del registro FS
-  //la suma de 0x60 (para x86_64) permite obtener la dirección base del PEB
-  void* pebBase = (void*) &p + PEB_OFFSET; 
-  fprintf(stdout,"0x%llX,",(void*)(size_t)pebBase);
-  fprintf(fileCSV,"0x%llX,",(void*)(size_t)pebBase);
+  void* pebBase;
+  //se obtiene la dirección del registro GS con un offset de 0x60 
+  //para obtener la dirección base del PEB
+  __asm__ ("mov %%gs:0x60, %0" :"=r"(pebBase));
+  fprintf(stdout,"0x%llX,",(void*)(size_t) pebBase);
+  fprintf(fileCSV,"0x%llX\n",(void*)(size_t) pebBase);
   return 0;
 }
 
