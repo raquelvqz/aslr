@@ -1,0 +1,8 @@
+[Unit]
+After=graphical.target
+
+[Service]
+ExecStart=/ASLR_linux_reboot.sh
+
+[Install]
+WantedBy=default.target
