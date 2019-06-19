@@ -43,7 +43,7 @@ int verifyPEB(FILE *fileCSV)
   return 0;
 }
 
-// se comprueba la localización de un nuevo heap
+// se comprueba la localización de un nuevo heap 
 int verifyHeapCreate(FILE *fileCSV)
 {
   void *hHeap;
